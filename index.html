@@ -86,11 +86,25 @@
   pointer-events: none;
   z-index: 2000;
 }
+#darkling {
+  position: fixed;
+  top: 45px;           /* distance from top, adjust as needed */
+  left: 47%;
+  transform: translateX(-50%);
+  color: black;
+  font-weight: bold;
+  font-family: system-ui, sans-serif;
+  font-size: 16px;     /* smaller font size */
+  cursor: pointer;
+  user-select: none;
+  z-index: 1000;
+}
   </style>
 </head>
 <body>
-  <div class="version-footer">Version 0.0.1</div>
+  <div class="version-footer" >Version 0.0.1</div>
 </body>
+<div id="darkling">darkling</div>
 
   <!-- button bar -->
   <div class="button-group">
@@ -369,6 +383,11 @@ window.addEventListener("beforeunload", async (e) => {
     });
   } catch {}
 });
+  const darkling = document.getElementById('darkling');
+
+  darkling.addEventListener('dblclick', () => {
+    window.location.href = 'folf.html';
+  });
 </script>
 </body>
 </html>
