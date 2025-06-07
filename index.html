@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DARKLING Notebook (Firebase Save + Load)</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ---------- base reset ---------- */
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;background:#f0f0f0;font-family:"Courier New",monospace;overflow:hidden}
+
+    /* ---------- layout ---------- */
+    .wrapper{height:100vh;width:100vw;display:flex;justify-content:center;align-items:center}
+    .scroll-area{height:75vh;width:56.25vh;max-width:90vw;background:#fff;border-radius:10px;
+                 box-shadow:0 0 10px rgb(0 0 0/.1);overflow:hidden;position:relative}
+    .page-container{height:100%;width:100%;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+
+    /* ---------- page styles ---------- */
+    .page{width:100%;min-height:100%;padding:0 40px 20px 60px;font-size:14px;line-height:23px;position:relative}
+    .page.ruled{background-image:repeating-linear-gradient(0deg,#fff 0px,#fff 21px,#000 21.7px);
+                background-size:100% 23px;background-position:0 23px}
+    .margin-lines{position:absolute;top:0;bottom:0;left:34px;width:1px;background:red}
+    .margin-lines::after{content:"";position:absolute;left:5px;top:0;bottom:0;width:1px;background:red}
+    .unruled .margin-lines{display:none}
+    .header{height:23px;color:transparent;pointer-events:none}
+    .content{outline:none;word-wrap:break-word;min-height:calc(100% - 23px);z-index:1}
+
+    /* ---------- UI buttons ---------- */
+    .button-group{
+      position:fixed;top:10px;left:20px;display:flex;gap:20px;z-index:1000;
+    }
+    .button-group button{
+      font:14px monospace;background:#fff;padding:6px 12px;border-radius:5px;
+      cursor:pointer;border:1px solid transparent;transition:.2s;
+      user-select:none;
+    }
+    .page-type{color:#0070f3;border-color:#0070f3}
+    .page-type:hover{background:#0070f3;color:#fff}
+    .page-style{color:#00a35c;border-color:#00a35c}
+    .page-style:hover{background:#00a35c;color:#fff}
+    .save-btn{color:#d35400;border-color:#d35400}
+    .save-btn:hover{background:#d35400;color:#fff}
+
+    .arrow{
+      position:fixed;top:50%;transform:translateY(-50%);
+      font-size:2.5rem;color:gray;background:none;border:none;cursor:pointer;z-index:1000;
+      user-select:none;
+    }
+    .arrow:hover{color:black;transform:translateY(-50%) scale(1.1)}
+    .arrow.left{left:10px}.arrow.right{right:10px}
+
+    .page-indicator{
+      position:fixed;top:20px;right:20px;color:gray;background:#fff;padding:6px 12px;
+      border-radius:5px;box-shadow:0 0 4px rgb(0 0 0/.05);cursor:pointer;user-select:none;z-index:1000;
+    }
+    .page-indicator:hover{color:#0070f3;text-decoration:underline}
+
+    /* ---------- image cover ---------- */
+    .image-page{background:url('https://assets.onecompiler.app/437qfd8zj/3ww47radw/1000175749.png') no-repeat center top/cover;
+                width:100%;height:100%}
+
+    /* ---------- font picker ---------- */
+    #fontModal{position:fixed;inset:0;background:rgb(0 0 0/.35);display:none;align-items:center;justify-content:center;z-index:1100}
+    #fontModal .box{background:#fff;border-radius:10px;padding:20px;max-width:90%;width:300px;display:flex;flex-wrap:wrap;gap:10px}
+    .font-option{flex:1 1 40%;padding:8px;border:1px solid #ddd;border-radius:6px;text-align:center;cursor:pointer;transition:.2s}
+    .font-option:hover{background:#f0f0f0}
+    .font-option[data-selected="true"]{border-color:#0070f3;background:#e8f3ff}
+
+    @media(max-width:768px){
+      .button-group button,.page-indicator{font-size:12px}
+      .arrow{font-size:2rem}
+      .button-group{gap:12px}
+    }
+  .version-footer {
+  position: fixed;
+  bottom: 5px;
+  right: 10px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #888;
+  user-select: none;
+  pointer-events: none;
+  z-index: 2000;
+}
+  </style>
+</head>
+<body>
+  <div class="version-footer">Version 0.0.1</div>
+</body>
+
+  <!-- button bar -->
+  <div class="button-group">
+    <button class="page-type" id="typeBtn"  onclick="toggleType()">Toggle</button>
+    <button class="page-style" id="styleBtn" onclick="openFontModal()">Style</button>
+    <button class="save-btn"  id="saveBtn"  onclick="saveAndLock()">Save</button>
+  </div>
+
+  <!-- other fixed ui -->
+  <div class="page-indicator" id="pageIndicator" title="Click to jump">Page&nbsp;1</div>
+  <button class="arrow left"  onclick="prevPage()">←</button>
+  <button class="arrow right" onclick="nextPage()">→</button>
+
+  <!-- notebook area -->
+  <div class="wrapper">
+    <div class="scroll-area">
+      <div class="page-container" id="pageContainer"></div>
+    </div>
+  </div>
+
+  <!-- font modal -->
+  <div id="fontModal" onclick="closeFontModal(event)">
+    <div class="box" id="fontBox"><!-- injected by JS --></div>
+  </div>
+<a 
+  href="https://www.instagram.com/pravvveennnn?igsh=dmpidnM1OW9mcmdu" 
+  target="_blank" 
+  rel="noopener noreferrer"
+  style="
+    position: fixed;
+    bottom: 3px;
+    left: 2px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #0077ff;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 3px 6px;
+    border-radius: 4px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.15);
+    text-decoration: none;
+    cursor: pointer;
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+  "
+  onmouseover="this.style.backgroundColor='#0077ff'; this.style.color='#fff';"
+  onmouseout="this.style.backgroundColor='rgba(255, 255, 255, 0.8)'; this.style.color='#0077ff';"
+>
+  Need to fix a bug? Share an idea!
+</a>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* ---------- Firebase Setup ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyC9rehsf-0jkb9dAeT1-0Z1C-yRJ0YI9dA",
+  authDomain: "gymnm-ce84b.firebaseapp.com",
+  projectId: "gymnm-ce84b",
+  storageBucket: "gymnm-ce84b.appspot.com",
+  messagingSenderId: "474926929394",
+  appId: "1:474926929394:web:6abdb807a5c76b",
+  measurementId: "G-6R9S8LYZNF"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ---------- notebook data ---------- */
+const notebookDoc = db.collection("notebooks").doc("user-notebook"); // single document to store all pages
+
+const pageContainer = document.getElementById("pageContainer");
+const typeBtn   = document.getElementById("typeBtn");
+const styleBtn  = document.getElementById("styleBtn");
+const saveBtn   = document.getElementById("saveBtn");
+const indicator = document.getElementById("pageIndicator");
+const fontBox   = document.getElementById("fontBox");
+
+/* first page = image cover */
+let pages  = [null];                         // no text for cover
+let types  = ["image"];                      // cover type
+let fonts  = ["'Courier New', monospace"];   // default font
+let locked = [false];                        // cover NOT locked (doesn't matter)
+
+let current = 0;
+
+/* font choices to show in modal */
+const fontChoices = [
+  ["Courier",    "'Courier New', monospace"],
+  ["Arial",      "Arial, sans-serif"],
+  ["Times",      "'Times New Roman', serif"],
+  ["Georgia",    "Georgia, serif"],
+  ["Comic Sans", "'Comic Sans MS', cursive"],
+  ["Pacifico",   "'Pacifico', cursive"],
+  ["Great Vibes","'Great Vibes', cursive"],
+  ["Brush",      "'Brush Script MT', cursive"]
+];
+
+/* build picker once */
+fontChoices.forEach(([label,fam])=>{
+  const d=document.createElement("div");
+  d.className="font-option"; d.textContent=label; d.style.fontFamily=fam;
+  d.onclick=()=>{fonts[current]=fam; closeFontModal(); render();};
+  fontBox.appendChild(d);
+});
+
+/* ---------- helpers ---------- */
+function initPage(i){
+  if(pages[i]  === undefined) pages[i]  = "";
+  if(types[i]  === undefined) types[i]  = "ruled";
+  if(fonts[i]  === undefined) fonts[i]  = fonts[i-1] || "'Courier New', monospace";
+  if(locked[i] === undefined) locked[i] = false;
+}
+
+/* ---------- render ---------- */
+function render(){
+  initPage(current);
+  pageContainer.innerHTML="";
+  indicator.textContent=`Page ${current+1}`;
+  typeBtn.textContent = (types[current]==="ruled") ? "Unruled" : "Ruled";
+
+  const isLocked = locked[current];
+
+  /* hide edit controls on image or locked page */
+  const hide = (types[current]==="image" || isLocked) ? "none" : "inline-block";
+  typeBtn.style.display  = hide;
+  styleBtn.style.display = hide;
+  saveBtn.style.display  = hide;
+
+  if(types[current]==="image"){
+    const cover=document.createElement("div");
+    cover.className="image-page";
+    pageContainer.appendChild(cover);
+  } else {
+    // Create page div
+    const pageDiv = document.createElement("div");
+    pageDiv.className = `page ${types[current]}`;
+    pageDiv.style.fontFamily = fonts[current];
+
+    // Margin lines for ruled pages
+    if(types[current] === "ruled"){
+      const margin = document.createElement("div");
+      margin.className = "margin-lines";
+      pageDiv.appendChild(margin);
+    }
+
+    // Header for line height offset
+    const header = document.createElement("div");
+    header.className = "header";
+    header.textContent = "\u200B"; // zero width space for spacing
+    pageDiv.appendChild(header);
+
+    // Content editable div
+    const content = document.createElement("div");
+    content.className = "content";
+    content.contentEditable = !locked[current];
+    content.spellcheck = false;
+    content.innerHTML = pages[current] || "";
+
+    // Save content on input
+    content.addEventListener("input", e => {
+      pages[current] = e.target.innerHTML;
+    });
+
+    pageDiv.appendChild(content);
+    pageContainer.appendChild(pageDiv);
+  }
+}
+
+/* ---------- page navigation ---------- */
+function prevPage(){
+  if(current === 0) return;
+  current--;
+  render();
+}
+function nextPage(){
+  current++;
+  initPage(current);
+  render();
+}
+
+/* ---------- toggle page type ---------- */
+function toggleType(){
+  if(types[current] === "image") return; // cover no toggle
+
+  types[current] = (types[current] === "ruled") ? "unruled" : "ruled";
+  render();
+}
+
+/* ---------- font modal ---------- */
+const fontModal = document.getElementById("fontModal");
+function openFontModal(){
+  if(types[current]==="image" || locked[current]) return;
+  fontModal.style.display = "flex";
+  updateFontSelection();
+}
+function closeFontModal(e){
+  if(e && e.target !== fontModal) return;
+  fontModal.style.display = "none";
+}
+function updateFontSelection(){
+  [...fontBox.children].forEach(div => {
+    div.dataset.selected = (div.style.fontFamily === fonts[current]) ? "true" : "false";
+  });
+}
+
+/* ---------- Save & Lock ---------- */
+async function saveAndLock(){
+  // Lock current page
+  locked[current] = true;
+
+  // Save current data to Firestore
+  try {
+    await notebookDoc.set({
+      pages: pages,
+      types: types,
+      fonts: fonts,
+      locked: locked
+    });
+    alert("Page saved and locked.");
+  } catch (e) {
+    alert("Error saving to database: " + e.message);
+  }
+  render();
+}
+
+/* ---------- Load notebook from Firestore on start ---------- */
+async function loadNotebook(){
+  try {
+    const doc = await notebookDoc.get();
+    if(doc.exists){
+      const data = doc.data();
+      pages  = data.pages  || pages;
+      types  = data.types  || types;
+      fonts  = data.fonts  || fonts;
+      locked = data.locked || locked;
+
+      // Ensure arrays are at least 1 element (cover)
+      if(pages.length === 0) pages = [null];
+      if(types.length === 0) types = ["image"];
+      if(fonts.length === 0) fonts = ["'Courier New', monospace"];
+      if(locked.length === 0) locked = [false];
+
+    } else {
+      // No data in Firestore, keep defaults
+      console.log("No notebook found, using default.");
+    }
+  } catch (e) {
+    alert("Error loading notebook from database: " + e.message);
+  }
+  render();
+}
+
+/* ---------- jump to page by clicking indicator ---------- */
+indicator.onclick = () => {
+  let p = prompt("Enter page number to jump to:", (current+1));
+  if(!p) return;
+  let n = parseInt(p);
+  if(isNaN(n) || n < 1) return alert("Invalid page number");
+  current = n-1;
+  initPage(current);
+  render();
+};
+
+/* ---------- Initial load ---------- */
+loadNotebook();
+
+/* ---------- Extra: Save automatically on page change ---------- */
+window.addEventListener("beforeunload", async (e) => {
+  try {
+    await notebookDoc.set({
+      pages: pages,
+      types: types,
+      fonts: fonts,
+      locked: locked
+    });
+  } catch {}
+});
+</script>
+</body>
+</html>
