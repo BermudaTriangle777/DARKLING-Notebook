@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>TGSI Secure Node</title>
+<style>
+  html,body{
+    margin:0;padding:0;background:black;color:#00ff88;
+    font-family:monospace;overflow:hidden;user-select:none;cursor:none;
+    height:100vh;width:100vw;position:relative;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;opacity:.05;
+    background:url('https://assets.onecompiler.app/437qfd8zj/3ww47radw/1000175808.jpg')
+              center/cover no-repeat;z-index:0;
+  }
+  .center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+          text-align:center;z-index:10;}
+  .warning{color:red;font-size:1.6rem;animation:blink 1s infinite;}
+  @keyframes blink{50%{opacity:0}}
+  .hidden{display:none}
+  .folder{background:rgba(0,255,136,.08);border:1px solid #00ff88;
+          padding:12px;margin:10px;width:280px;text-align:left;}
+
+  #spamOverlay{pointer-events:none;position:fixed;inset:0;overflow:hidden;z-index:9000;}
+  #spamOverlay img{position:absolute;filter:drop-shadow(0 0 3px #00ff88);
+                   opacity:.8;will-change:transform,top,left;}
+  #spamOverlay span{position:absolute;color:red;font-weight:bold;
+                    animation:flicker .3s infinite;text-shadow:0 0 6px red;
+                    white-space:nowrap;}
+  @keyframes flicker{50%{opacity:.25}}
+
+  #bloodCanvas{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    pointer-events:none;z-index:9999;display:none;
+  }
+
+  #ganaFrame {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    border: none;
+    z-index: 10000;
+    background: black;
+  }
+  .folder-btn {
+  background: rgba(0,255,136,0.08);
+  border: 1px solid #00ff88;
+  color: #00ff88;
+  padding: 14px 20px;
+  margin: 12px auto;
+  width: 280px;
+  font-family: monospace;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 6px;
+  user-select:none;
+}
+
+.folder-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px #00ff88;
+  background: rgba(0,255,136,0.15);
+}
+
+.folder-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 25px #00ff88 inset;
+}
+</style>
+</head>
+<body oncontextmenu="return false">
+  <audio id="bgAudio" src="loud.mp4" loop></audio>
+
+  <div class="center">
+    <div id="warning" class="warning">⚠ SYSTEM TRACE INITIATED</div>
+
+    <div id="accessBox" class="hidden">
+      <h2>ENTER ACCESS KEY</h2>
+      <input id="key" type="password"
+             style="padding:5px;background:black;color:#00ff88;" autocomplete="off">
+      <br><br>
+      <button onclick="verifyKey()"
+              style="padding:8px 20px;background:black;border:1px solid #00ff88;color:#00ff88;">
+        ACCESS
+      </button>
+    </div>
+
+    <div id="granted" class="hidden">✔ ACCESS GRANTED</div>
+
+<div id="folders" class="hidden">
+  <button class="folder-btn" data-target="Human_Behavior.html">Human_Behavior.html</button>
+  <button class="folder-btn" data-target="Dark_Physiology.html">Dark_Physiology.html</button>
+  <button class="folder-btn" data-target="Manipulation_Protocols.html">Manipulation_Protocols.html</button>
+</div>
+  </div>
+
+  <div id="spamOverlay"></div>
+  <canvas id="bloodCanvas"></canvas>
+
+<script>
+setTimeout(()=>{
+  document.getElementById("warning").classList.add("hidden");
+  document.getElementById("accessBox").classList.remove("hidden");
+},3000);
+
+function verifyKey(){
+  const key=document.getElementById("key").value.trim();
+  if(key==="31012008"){
+    document.getElementById("accessBox").classList.add("hidden");
+    document.getElementById("granted").classList.remove("hidden");
+    document.getElementById("folders").classList.remove("hidden");
+  }else{
+    // Immediately hide access box & trigger terror mode
+    document.getElementById("accessBox").classList.add("hidden");
+    triggerTerrorMode();
+
+    // After 4 seconds, show gana.html iframe
+    setTimeout(showGanaIframe, 4000);
+
+    // After 8 seconds, force close window/tab
+    setTimeout(() => {
+      window.close();
+    }, 8000);
+  }
+}
+
+const spamOverlay=document.getElementById("spamOverlay");
+const spamImgs=[
+  "https://assets.onecompiler.app/437qfd8zj/43m39crdf/1000175816.png",
+  "https://assets.onecompiler.app/437qfd8zj/43m39crdf/1000175813.jpg",
+  "https://assets.onecompiler.app/437qfd8zj/43m39crdf/1000175815.jpg"
+];
+let vibInt,imgInt,txtInt;
+
+function triggerTerrorMode(){
+  const audio=document.getElementById("bgAudio");
+  audio.volume=1;
+  audio.play().catch(()=>{});
+
+  vibInt=setInterval(()=>navigator.vibrate?.([50,50,50,50]),40);
+
+  imgInt=setInterval(()=>{
+    for(let i=0;i<15;i++)spawnImg();
+    if(spamOverlay.children.length>600){
+      for(let j=0;j<120;j++)spamOverlay.firstChild?.remove();
+    }
+  },60);
+
+  const words=["ILLEGAL ACCESS","RUN","KERNEL PANIC","FATAL","BLOOD","ERROR 0xC0DE"];
+  txtInt=setInterval(()=>{
+    for(let n=0;n<25;n++){
+      const s=document.createElement("span");
+      s.textContent=words[Math.random()*words.length|0];
+      s.style.top=Math.random()*100+"vh";
+      s.style.left=Math.random()*100+"vw";
+      s.style.fontSize=14+Math.random()*32+"px";
+      spamOverlay.appendChild(s);
+    }
+    if(spamOverlay.children.length>1000){
+      for(let k=0;k<200;k++)spamOverlay.firstChild?.remove();
+    }
+  },40);
+
+  startBloodRain();
+}
+
+function spawnImg(){
+  const img=document.createElement("img");
+  img.src=spamImgs[Math.random()*spamImgs.length|0];
+  img.style.width=100+Math.random()*60+"px";
+  img.style.top=Math.random()*100+"vh";
+  img.style.left=Math.random()*100+"vw";
+  img.style.transform=`rotate(${Math.random()*60-30}deg)`;
+  spamOverlay.appendChild(img);
+
+  let dx=(Math.random()-.5)*1.2,dy=(Math.random()-.5)*1.2;
+  let t=parseFloat(img.style.top),l=parseFloat(img.style.left);
+  (function drift(){
+    t+=dy;l+=dx;
+    if(t<0)t=100;else if(t>100)t=0;
+    if(l<0)l=100;else if(l>100)l=0;
+    img.style.top=t+"vh";
+    img.style.left=l+"vw";
+    requestAnimationFrame(drift);
+  })();
+}
+
+function startBloodRain(){
+  const canvas=document.getElementById("bloodCanvas");
+  const ctx=canvas.getContext("2d");
+  canvas.style.display="block";
+
+  function resize(){
+    canvas.width=innerWidth;
+    canvas.height=innerHeight;
+  }
+  resize();addEventListener("resize",resize);
+
+  class BloodDrop{
+    constructor(){this.reset();}
+    reset(){
+      this.x=Math.random()*canvas.width;
+      this.y=-Math.random()*canvas.height*0.5;
+      this.radius=canvas.width/20 + Math.random()*(canvas.width/25);
+      this.len=canvas.height/1.2;
+      this.speed=1.2+Math.random()*1.3;
+      this.stretch=1;
+    }
+    update(){
+      this.y+=this.speed;
+      this.stretch+=0.05;
+      if(this.y-this.radius>canvas.height)this.reset();
+    }
+    draw(){
+      const g=ctx.createLinearGradient(this.x,this.y,this.x,this.y+this.len);
+      g.addColorStop(0,"rgba(150,0,0,1)");
+      g.addColorStop(1,"rgba(255,0,0,0)");
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      ctx.ellipse(this.x,this.y,this.radius*1.1,this.radius*this.stretch,0,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+  const drops=Array.from({length:80},()=>new BloodDrop());
+  (function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drops.forEach(d=>{d.update();d.draw();});
+    requestAnimationFrame(animate);
+  })();
+}
+
+function showGanaIframe(){
+  const iframe = document.createElement('iframe');
+  iframe.id = "ganaFrame";
+  iframe.src = 'look away.html';
+  document.body.appendChild(iframe);
+}
+  document.querySelectorAll('.folder-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetFile = btn.getAttribute('data-target');
+    // Optional animation before navigation:
+    btn.style.transform = 'scale(1.3)';
+    btn.style.boxShadow = '0 0 40px #00ff88';
+    setTimeout(() => {
+      window.location.href = targetFile;
+    }, 400); // wait 400ms for animation to play before redirect
+  });
+});
+</script>
+</body>
+</html>
